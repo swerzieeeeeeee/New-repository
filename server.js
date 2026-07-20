@@ -1,5 +1,5 @@
 const express = require('express');
-const Gamedig = require('gamedig'); // Süslü parantezleri kaldırdık
+const Gamedig = require('gamedig');
 const app = express();
 
 app.use((req, res, next) => {
@@ -9,7 +9,6 @@ app.use((req, res, next) => {
 
 app.get('/', async (req, res) => {
   try {
-    // Yeni sürümlerde Gamedig direkt fonksiyon veya statik nesne olarak çağrılır
     const state = await Gamedig.query({
       type: 'csgo',
       host: '185.171.25.53',
@@ -18,16 +17,21 @@ app.get('/', async (req, res) => {
       requestTimeout: 4000
     });
 
+    // Anlık oyuncuları skorlarına (score) göre büyükten küçüğe sırala
+    const sortedPlayers = (state.players || []).sort((a, b) => b.score - a.score);
+
     res.json({
       online: true,
       players: `${state.players.length}/${state.maxplayers}`,
-      map: state.map
+      map: state.map,
+      topPlayers: sortedPlayers // Canlı sıralama listesi
     });
   } catch (error) {
     res.json({
       online: false,
       players: "0/24",
-      map: "SORGULAMA_HATASI",
+      map: "OFFLINE",
+      topPlayers: [],
       debug: error.message
     });
   }
