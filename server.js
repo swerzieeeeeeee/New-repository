@@ -17,14 +17,26 @@ app.get('/', async (req, res) => {
       requestTimeout: 4000
     });
 
-    // Anlık oyuncuları skorlarına (score) göre büyükten küçüğe sırala
-    const sortedPlayers = (state.players || []).sort((a, b) => b.score - a.score);
+    // Oyuncuları önce skora göre, skorlar eşitse/yoksa oyunda kalma süresine (time) göre sırala
+    const sortedPlayers = (state.players || [])
+      .map(p => ({
+        name: p.name,
+        // Skor raw nesnesinde mi yoksa direkt nesnede mi kontrol et
+        score: p.score !== undefined && p.score !== 0 ? p.score : (p.raw && p.raw.score ? p.raw.score : 0),
+        time: p.time || (p.raw && p.raw.time ? p.raw.time : 0)
+      }))
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score; // Önce skora göre
+        }
+        return b.time - a.time; // Skorlar eşitse/0 ise oyundaki süresine göre
+      });
 
     res.json({
       online: true,
       players: `${state.players.length}/${state.maxplayers}`,
       map: state.map,
-      topPlayers: sortedPlayers // Canlı sıralama listesi
+      topPlayers: sortedPlayers
     });
   } catch (error) {
     res.json({
