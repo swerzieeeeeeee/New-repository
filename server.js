@@ -9,10 +9,13 @@ app.use((req, res, next) => {
 
 app.get('/', async (req, res) => {
   try {
+    // Şansımızı artırmak için sorgu parametrelerini biraz daha genişletiyoruz
     const state = await Gamedig.query({
-      type: 'csgo',
+      type: 'csgo', // Eğer yine gelmezse burayı 'goldsrc' yapmayı deneyeceğiz
       host: '185.171.25.53',
-      port: 27015
+      port: 27015,
+      maxAttempts: 3, // Yanıt alamazsa 3 kez tekrar dene
+      requestTimeout: 3000 // 3 saniye bekle
     });
 
     res.json({
@@ -21,10 +24,12 @@ app.get('/', async (req, res) => {
       map: state.map
     });
   } catch (error) {
+    // Konsolda hatanın ne olduğunu tam görmek için hata mesajını API çıktısına ekliyoruz
     res.json({
       online: false,
       players: "0/24",
-      map: "OFFLINE"
+      map: "SORGULAMA_HATASI",
+      debug: error.message // Bize tam olarak neden bağlanamadığını söyleyecek
     });
   }
 });
